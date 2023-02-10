@@ -125,7 +125,7 @@ namespace Qarth
                 }
             }
 
-            offset -= padding;
+            offset += padding;
             return basePos + offset;
         }
 
@@ -159,7 +159,6 @@ namespace Qarth
             else
             {
                 GameObject go = GameObject.Instantiate(itemPrefab, content, false) as GameObject;
-                go.SetActive(true);
                 lstItems.Add(go);
                 return go;
             }

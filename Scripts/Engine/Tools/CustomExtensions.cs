@@ -1,39 +1,17 @@
-using System.Text;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using System;
+using System.Text;
+using DG.Tweening;
 using System.Linq;
-using GameWish.Game;
-using Object = UnityEngine.Object;
-#if UNITY_ANDROID
-using UnityEngine.Android;
-#endif
 
 namespace Qarth
 {
     public static class CustomExtensions
     {
         #region helper
-        public static void ShowToast(string str)
-        {
-#if UNITY_ANDROID && !UNITY_EDITOR
-            AndroidJavaClass UnityPlayer = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
-            AndroidJavaObject currentActivity = UnityPlayer.GetStatic<AndroidJavaObject>("currentActivity"); ;
-            AndroidJavaClass Toast = new AndroidJavaClass("android.widget.Toast");
-            AndroidJavaObject context = currentActivity.Call<AndroidJavaObject>("getApplicationContext");
-            currentActivity.Call("runOnUiThread", new AndroidJavaRunnable(() =>
-            {
-                AndroidJavaObject javaString = new AndroidJavaObject("java.lang.String", str);
-                Toast.CallStatic<AndroidJavaObject>("makeText", context, javaString, Toast.GetStatic<int>("LENGTH_SHORT")).Call("show");
-            }
-            ));
-#else
-            FloatMessage.S.ShowMsg(str);
-#endif
-        }
-
         public static void ShuffleList<T>(this List<T> list)
         {
             System.Random rng = new System.Random();
@@ -107,6 +85,7 @@ namespace Qarth
                 CustomVibration.Vibrate(milliseconds);
             }
         }
+
 
         public static T GetStringEnum<T>(string val)
         {
@@ -414,6 +393,53 @@ namespace Qarth
             anim[stateName].speed = 1;
         }
 
+        public static string StringForMultiLine(this string target, int lineByteCount)
+        {
+            string nextLine = "\n";
+            StringBuilder sb = new StringBuilder();
+
+            var listStr = target.MySplit(lineByteCount);
+            if (listStr.Length <= 1)
+            {
+                return target;
+            }
+
+            for (int i = 0; i < listStr.Length; i++)
+            {
+                sb.Append(listStr[i]);
+                if (i < listStr.Length - 1)
+                    sb.Append(nextLine);
+
+
+            }
+            return sb.ToString();
+        }
+
+        static string[] MySplit(this string str, int count)
+        {
+            var list = new List<string>();
+            int length = (int)Math.Ceiling((double)str.Length / count);
+
+            for (int i = 0; i < length; i++)
+            {
+                int start = count * i;
+                if (str.Length <= start)
+                {
+                    break;
+                }
+                if (str.Length < start + count)
+                {
+                    list.Add(str.Substring(start));
+                }
+                else
+                {
+                    list.Add(str.Substring(start, count));
+                }
+            }
+
+            return list.ToArray();
+        }
+
         //获取网格的size
         static public Vector3 GetMeshSize(this GameObject objRoot)
         {
@@ -434,17 +460,10 @@ namespace Qarth
         }
 
         private static SpritesHandler m_GlobalSprHandler = new SpritesHandler();
-        public static Sprite FindSprite(ResLoader loader, string spriteName, string assetName = "", int pixelPerUnit = 100)
+        public static Sprite FindSprite(ResLoader loader, string assetName, string spriteName)
         {
             Sprite result = null;
-            Object obj = loader.LoadSync(spriteName) as Object;
-
-            Texture2D text = obj as Texture2D;
-            if (text != null)
-            {
-                result = Sprite.Create(text, new Rect(0, 0, text.width, text.height), new Vector2(0.5f, 0.5f), pixelPerUnit);
-            }
-
+            result = loader.LoadSync(spriteName) as Sprite;
             if (result == null)
             {
                 var data = loader.LoadSync(assetName) as SpritesData;
@@ -502,31 +521,6 @@ namespace Qarth
             return (long)(DateTime.Now - dtLast).TotalSeconds;
         }
 
-        public static string GetTimeStrToTimestamps(string timestamp)
-        {
-            DateTime dtStart = new DateTime(1970, 1, 1, 0, 0, 0, 0);
-            var dtEnd = dtStart.AddMilliseconds(long.Parse(timestamp));
-            var ts = dtEnd - DateTime.Now;
-            return ts.Minutes + ":" + ts.Seconds;
-        }
-
-        public static string GetTimeStrToDayEnd(string timestamp)
-        {
-            DateTime dtStart = new DateTime(1970, 1, 1, 0, 0, 0, 0);
-            var dtnow = DateTime.Now;
-            DateTime dtend = new DateTime(dtnow.Year, dtnow.Month, dtnow.Day + 1, 0, 0, 0, 0);
-            //var dtNow = dtStart.AddMilliseconds(long.Parse(timestamp));
-            var ts = dtend - DateTime.Now;
-            return ts.Hours + ":" + ts.Minutes + ":" + ts.Seconds;
-        }
-
-        public static long GetSecToTimestamps(string timestamp)
-        {
-            DateTime dtStart = new DateTime(1970, 1, 1, 0, 0, 0, 0);
-            var dtEnd = dtStart.AddMilliseconds(long.Parse(timestamp));
-            return (long)(dtEnd - DateTime.Now).TotalSeconds;
-        }
-
         public static string GetTimeStampAfterSec(string timestamp, int sec)
         {
             DateTime dtStart = new DateTime(1970, 1, 1, 0, 0, 0, 0);
@@ -535,71 +529,8 @@ namespace Qarth
         }
         public static string GetTimeStamp(DateTime dt)
         {
-            TimeSpan ts = dt - new DateTime(1970, 1, 1, 0, 0, 0, 0);
+            TimeSpan ts = DateTime.Now - new DateTime(1970, 1, 1, 0, 0, 0, 0);
             return Convert.ToInt64(ts.TotalMilliseconds).ToString();
-        }
-
-        public static void ProcessFuncRunTime(string tag, Action run)
-        {
-            System.Diagnostics.Stopwatch stopwatch = new System.Diagnostics.Stopwatch();
-
-            stopwatch.Start(); //  开始监视代码运行时间
-            run.Invoke();
-            stopwatch.Stop(); //  停止监视
-
-            //  获取当前实例测量得出的总时间
-            System.TimeSpan timespan = stopwatch.Elapsed;
-            //   double hours = timespan.TotalHours; // 总小时
-            //    double minutes = timespan.TotalMinutes;  // 总分钟
-            //    double seconds = timespan.TotalSeconds;  //  总秒数
-            double milliseconds = timespan.TotalMilliseconds;  //  总毫秒数
-
-            //打印代码执行时间
-            Debug.Log(string.Format("{0} 运行用时 : {1} ", tag, milliseconds));
-        }
-
-        public static bool CheckIsNewDayByTimeStamp(string timeStamp)
-        {
-            DateTime lastSignDate;
-            if (!string.IsNullOrEmpty(timeStamp))
-            {
-                lastSignDate = GetTimeFromTimestamp(timeStamp);
-                //if ()
-                {
-                    DateTime today = DateTime.Today;
-
-                    if (lastSignDate.DayOfYear != DateTime.Now.DayOfYear)
-                    {
-                        return true;
-                    }
-                    else
-                        return false;
-                }
-            }
-
-            return false;
-        }
-
-        public static int GetPassDayByTimeStamp(string timeStamp)
-        {
-            DateTime lastSignDate;
-            if (!string.IsNullOrEmpty(timeStamp))
-            {
-                lastSignDate = GetTimeFromTimestamp(timeStamp);
-                //if ()
-                {
-                    DateTime today = DateTime.Today;
-
-                    if (lastSignDate.DayOfYear != DateTime.Now.DayOfYear)
-                    {
-                        return today.DayOfYear - lastSignDate.DayOfYear;
-                    }
-                    else
-                        return 0;
-                }
-            }
-
-            return -1;
         }
 
         public static int CheckIsNewDay(string dayKey = "lastsignstr--12354371")
@@ -613,7 +544,7 @@ namespace Qarth
                     DateTime today = DateTime.Today;
                     TimeSpan pass = today - lastSignDate;
 
-                    if (pass.TotalDays >= 1)
+                    if (pass.Days >= 1)
                     {
                         PlayerPrefs.SetString(dayKey, DateTime.Today.ToShortDateString());
                     }
@@ -643,18 +574,6 @@ namespace Qarth
             localPos.z = 0f;
             uiTarget.localPosition = localPos;
         }
-        public static Vector3 GetScreenPosition2UIPosition(Camera sceneCamera, Camera uiCamera, Vector3 posInScreen, Transform uiTarget)
-        {
-            Vector3 originPos = uiTarget.position;
-            Vector3 viewportPos = sceneCamera.ScreenToViewportPoint(posInScreen);
-            Vector3 worldPos = uiCamera.ViewportToWorldPoint(viewportPos);
-            uiTarget.position = worldPos;
-            Vector3 localPos = uiTarget.localPosition;
-            localPos.z = 0f;
-
-            uiTarget.position = originPos;
-            return localPos;
-        }
         public static void ScenePosition2UIPosition(Camera sceneCamera, Camera uiCamera, Vector3 posInScene, Transform uiTarget)
         {
             Vector3 viewportPos = sceneCamera.WorldToViewportPoint(posInScene);
@@ -663,18 +582,6 @@ namespace Qarth
             Vector3 localPos = uiTarget.localPosition;
             localPos.z = 0f;
             uiTarget.localPosition = localPos;
-        }
-        public static Vector3 GetScenePosition2UIPosition(Camera sceneCamera, Camera uiCamera, Vector3 posInScene, Transform uiTarget)
-        {
-            Vector3 originPos = uiTarget.position;
-            Vector3 viewportPos = sceneCamera.WorldToViewportPoint(posInScene);
-            Vector3 worldPos = uiCamera.ViewportToWorldPoint(viewportPos);
-            uiTarget.position = worldPos;
-            Vector3 localPos = uiTarget.localPosition;
-            localPos.z = 0f;
-
-            uiTarget.position = originPos;
-            return localPos;
         }
 
         public static Vector3 UIPosToScenePos(Camera sceneCamera, Camera uiCamera, Vector3 uiPos)
@@ -687,41 +594,8 @@ namespace Qarth
         #endregion
 
         #region sdk
-        //普通广告准备判断
-        public static bool IsAdReady(string adInterface)
-        {
-#if UNITY_EDITOR
-            FloatMessage.S.ShowMsg("UNITY_EDITOR: 广告准备好了");
-            return true;
-#endif
-            if (AdsMgr.S.GetAdInterface(adInterface) != null && AdsMgr.S.GetAdInterface(adInterface).isAdReady)
-            {
-                return true;
-            }
 
-            return false;
-        }
 
-        //信息流准备判断
-        public static bool IsMixViewAdReady(string adPlacement)
-        {
-            var plm = AdsMgr.S.GetAdPlacement(adPlacement);
-            var inter = AdsMgr.S.GetAdInterfaceByPlacementID(adPlacement, 0);
-
-            if (plm != null && !plm.IsTimeShowAble())
-            {
-                return false;
-            }
-
-            if (inter != null && inter.isAdReady)
-            {
-                return true;
-            }
-
-            return false;
-        }
-
-        private static int m_AdNotShowCount = 0;
         private static Action m_AdShowCommonCallback;
 
         //设置视频广告通用回调
@@ -729,109 +603,7 @@ namespace Qarth
         {
             m_AdShowCommonCallback = callback;
         }
-
         //播放视频广告
-        public static void PlayAd(string tag, Action<bool> callBack, Action failCallback = null, string inter = "Reward0", string pId = "MainReward")
-        {
-#if UNITY_EDITOR
-            FloatMessage.S.ShowMsg("看了一个广告");
-            callBack.Invoke(false);
-            if (m_AdShowCommonCallback != null)
-                m_AdShowCommonCallback.Invoke();
-            return;
-#endif
-            if (IsAdReady(inter))
-            {
-                m_AdNotShowCount = 0;
-                AdDisplayer.Builder()
-                    .SetOnAdShowResultCallback((isShowSuccess, isRewardSuccess, isClickAd, rewardID, tid, ecpm) =>
-                    {
-                        if (isShowSuccess && isRewardSuccess)
-                        {
-                            callBack.Invoke(isClickAd);
-                            if (m_AdShowCommonCallback != null)
-                                m_AdShowCommonCallback.Invoke();
-                            DataAnalysisMgr.S.SatoriEvt_ADReward(tag);
-                        }
-                        else
-                        {
-                            if (failCallback != null)
-                                failCallback.Invoke();
-                        }
-                    })
-                    .SetForceShow(true)
-                    .SetPlacementID(pId)
-                    .Show(tag);
-            }
-            else
-            {
-                m_AdNotShowCount++;
-                if (pId == "MainReward")
-                {
-                    if (m_AdNotShowCount >= 15)
-                    {
-                        FloatMessage.S.ShowMsg("正在加载视频，请稍后再试");
-                    }
-                    else
-                    {
-                        FloatMessage.S.ShowMsg("正在加载视频，请稍后再试");
-                    }
-                }
-
-                if (failCallback != null)
-                    failCallback.Invoke();
-            }
-        }
-
-        //播放视频广告带tid参数，获取ecpm奖励
-        public static void PlayAd(string tag, Action<bool, string, float> callBack, Action failCallback = null, string inter = "Reward0", string pId = "MainReward")
-        {
-#if UNITY_EDITOR
-            FloatMessage.S.ShowMsg("看了一个广告");
-            callBack.Invoke(true, "", 12);
-            if (m_AdShowCommonCallback != null)
-                m_AdShowCommonCallback.Invoke();
-            return;
-#endif
-            if (IsAdReady(inter))
-            {
-                m_AdNotShowCount = 0;
-                AdDisplayer.Builder()
-                    .SetOnAdShowResultCallback((isShowSuccess, isRewardSuccess, isClickAd, rewardID, tid, ecpm) =>
-                    {
-                        if (isShowSuccess && isRewardSuccess)
-                        {
-                            callBack.Invoke(isClickAd, tid, ecpm);
-                            if (m_AdShowCommonCallback != null)
-                                m_AdShowCommonCallback.Invoke();
-                            DataAnalysisMgr.S.SatoriEvt_ADReward(tag);
-                        }
-                        else
-                        {
-                            if (failCallback != null)
-                                failCallback.Invoke();
-                        }
-                    })
-                    .SetForceShow(true)
-                    .SetPlacementID(pId)
-                    .Show(tag);
-            }
-            else
-            {
-                m_AdNotShowCount++;
-                if (m_AdNotShowCount >= 15)
-                {
-                    FloatMessage.S.ShowMsg("正在加载视频，请稍后再试");
-                }
-                else
-                {
-                    FloatMessage.S.ShowMsg("正在加载视频，请稍后再试");
-                }
-
-                if (failCallback != null)
-                    failCallback.Invoke();
-            }
-        }
 
         public static bool IsAfNonOrganic()
         {
@@ -843,108 +615,14 @@ namespace Qarth
 #endif
         }
 
-
-        public static bool IsPermissionGranted(string permission)
-        {
-#if UNITY_ANDROID && !UNITY_EDITOR
-            return AndroidPermissionsManager.IsPermissionGranted(permission);
-#endif
-            return true;
-        }
-
-        public static void RequestPermission(
-            string permission,
-            Action<string> onGrantedCallback,
-            Action<string> onDeniedCallback,
-            Action<string> onDeniedAndDontAskAgainCallback)
-        {
-#if UNITY_ANDROID && !UNITY_EDITOR
-            if (!IsPermissionGranted(permission))
-            {
-                AndroidPermissionsManager.RequestPermission(new[] { permission },
-                    new AndroidPermissionCallback(onGrantedCallback, onDeniedCallback, onDeniedAndDontAskAgainCallback));
-            }
-#endif
-        }
-
-        public static void RequestPermission(string permission,
-            Action<string> onGrantedCallback,
-            Action<string> onDeniedCallback,
-            Action<string> onDeniedAndDontAskAgainCallback,
-            Action grantedCallback)
-        {
-#if UNITY_ANDROID && !UNITY_EDITOR
-            if (!IsPermissionGranted(permission))
-            {
-                AndroidPermissionsManager.RequestPermission(new[] { permission },
-                    new AndroidPermissionCallback(onGrantedCallback, onDeniedCallback, onDeniedAndDontAskAgainCallback));
-            }
-            else
-            {
-                grantedCallback?.Invoke();
-            }
-#endif
-        }
-
-        public static void RequestPermissions(
-            string[] permissions,
-            Action<string> onGrantedCallback,
-            Action<string> onDeniedCallback,
-            Action<string> onDeniedAndDontAskAgainCallback)
-        {
-#if UNITY_ANDROID && !UNITY_EDITOR
-
-            if (permissions == null)
-            {
-                onGrantedCallback?.Invoke("");
-                return;
-            }
-
-            List<string> need = new List<string>();
-
-            for (int i = 0; i < permissions.Length; i++)
-            {
-                if (!IsPermissionGranted(permissions[i]))
-                {
-                    need.Add(permissions[i]);
-                }
-            }
-
-            if (need.Count <= 0)
-            {
-                onGrantedCallback?.Invoke("");
-            }
-            else
-            {
-                AndroidPermissionsManager.RequestPermission(need.ToArray(),
-                    new AndroidPermissionCallback(onGrantedCallback, onDeniedCallback,
-                        onDeniedAndDontAskAgainCallback));
-            }
-#endif
-        }
-
-        public static void RequestSensitivePermissions(Action grantedCallback = null)
-        {
-            RequestPermission(AndroidPermissionDefine.READ_PHONE_STATE, (p) => { grantedCallback?.Invoke(); }, (p) => { }, (p) => { });
-            RequestPermission(AndroidPermissionDefine.WRITE_EXTERNAL_STORAGE, (p) => { }, (p) => { }, (p) => { });
-            RequestPermission(AndroidPermissionDefine.ACCESS_COARSE_LOCATION, (p) => { }, (p) => { }, (p) => { });
-        }
-
         public static string GetSDKChannel()
         {
 #if UNITY_ANDROID && !UNITY_EDITOR
-            string channelId = SplitAppHandler.GetChannelId();
-            Log.i("channel id: "+channelId);
-            if (!string.IsNullOrEmpty(channelId))
-            {
-                return channelId;
-            }
-
-            return TaurusXAdSdk.Api.TaurusXConfigUtil.GetChannel();
++            return TaurusXAdSdk.Api.TaurusXConfigUtil.GetChannel();
 #elif UNITY_IOS && !UNITY_EDITOR
             return "ios";
 #endif
-            return "bytedance";
+            return "ios";
         }
 
         #endregion
@@ -971,7 +649,6 @@ namespace Qarth
 
         public static void FetchRemoteConfParams(string appName, string key,
             Action<string> responseCallback,
-            Action failedCallback = null,
             string channelId = "all",
             string baseUrl = "http://remoteconf.freeqingnovel.com",
             Dictionary<string, string> headers = null)
@@ -985,28 +662,133 @@ namespace Qarth
                         var data = LitJson.JsonMapper.ToObject<RemoteConfResponse>(response.Text);
                         if (data != null && data.success && !string.IsNullOrEmpty(data.data.v))
                         {
-                            responseCallback?.Invoke(data.data.v);
-                        }
-                        else
-                        {
-                            failedCallback?.Invoke();
+                            responseCallback.Invoke(data.data.v);
                         }
                     }
                     else
                     {
-                        failedCallback?.Invoke();
-
                         Debug.LogError(response.StatusCode + " >>> " + response.Error);
                     }
                 }, reject =>
                 {
-                    failedCallback?.Invoke();
                     Debug.LogError(reject.Message);
                 })
             .Catch(e => Debug.LogError("remote conf :" + e.StackTrace));
         }
 
+        public static void FetchRemoteConfParams(string appName, string key,
+           Action<string> responseCallback,
+               Action failCallBack,
+           string channelId = "all",
+           string baseUrl = "http://remoteconf.freeqingnovel.com",
+           Dictionary<string, string> headers = null)
+        {
+            Proyecto26.RestClient.Request(GetRequestHelper_GetRemoteConf(appName, key, channelId, baseUrl, headers))
+                .Then(response =>
+                {
+                    if (response.StatusCode == 200 && string.IsNullOrEmpty(response.Error))
+                    {
+                        //Debug.Log(response.Text);
+                        var data = LitJson.JsonMapper.ToObject<RemoteConfResponse>(response.Text);
+                        if (data != null && data.success && !string.IsNullOrEmpty(data.data.v))
+                        {
+                            responseCallback.Invoke(data.data.v);
+                            responseCallback = null;
+                        }
+                        else
+                        {
+                            if (failCallBack != null)
+                            {
+                                failCallBack.Invoke();
+                                failCallBack = null;
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if (failCallBack != null)
+                        {
+                            failCallBack.Invoke();
+                            failCallBack = null;
+                        }
+                        Debug.LogError(response.StatusCode + " >>> " + response.Error);
+                    }
+                }, reject =>
+                {
+                    Debug.LogError(reject.Message);
+                    if (failCallBack != null)
+                    {
+                        failCallBack.Invoke();
+                        failCallBack = null;
+                    }
+                })
+            .Catch(e => Debug.LogError("remote conf :" + e.StackTrace));
+        }
 
+        #endregion
+
+
+        #region ttevt 
+        public static void TTCustomEvt_VirtualCurrency(string type, string from, int amount)
+        {
+            Dictionary<string, string> evtDict = new Dictionary<string, string>();
+            evtDict.Add("currency_type", type);
+            evtDict.Add("get_from", from);
+            evtDict.Add("coin_amount", amount.ToString());
+            TTEventSender.TTEventSendV3("get_virtual_currency", evtDict);
+        }
+        public static void TTCustomEvt_VirtualCurrency(string type, string from, string amount)
+        {
+            Dictionary<string, string> evtDict = new Dictionary<string, string>();
+            evtDict.Add("currency_type", type);
+            evtDict.Add("get_from", from);
+            evtDict.Add("coin_amount", amount);
+            TTEventSender.TTEventSendV3("get_virtual_currency", evtDict);
+        }
+
+        public static void TTCustomEvt_VirtualItem(string type, string name, string from, int amount = 1)
+        {
+            Dictionary<string, string> evtDict = new Dictionary<string, string>();
+            evtDict.Add("item_type", type);
+            evtDict.Add("item_name", name);
+            evtDict.Add("get_from", from);
+            evtDict.Add("item_amount", amount.ToString());
+            TTEventSender.TTEventSendV3("get_virtual_items", evtDict);
+        }
+
+        public static void TTCustomEvt_Quest(string id, string type = "achieve", bool isSucc = true)
+        {
+            Dictionary<string, string> evtDict = new Dictionary<string, string>();
+            evtDict.Add("is_success", isSucc.ToString());
+            evtDict.Add("quest_type", type);
+            evtDict.Add("quest_id", id);
+            TTEventSender.TTEventSendV3("quest", evtDict);
+        }
+
+        public static void TTCustomEvt_Award(string type, bool isAward)
+        {
+            Dictionary<string, string> evtDict = new Dictionary<string, string>();
+            evtDict.Add("award_type", type);
+            if (isAward)
+                TTEventSender.TTEventSendV3("click_award", evtDict);
+            else
+                TTEventSender.TTEventSendV3("cancel_award", evtDict);
+        }
+
+        public static void TTCustomEvt_Diamond(string cost, string getCount)
+        {
+            Dictionary<string, string> evtDict = new Dictionary<string, string>();
+            evtDict.Add("cost", cost);
+            evtDict.Add("get", getCount);
+            TTEventSender.TTEventSendV3("total_diamond", evtDict);
+        }
+
+        public static void TTCustomEvt(string key, string label)
+        {
+            Dictionary<string, string> evtDict = new Dictionary<string, string>();
+            evtDict.Add("label", label);
+            TTEventSender.TTEventSendV3(key, evtDict);
+        }
         #endregion
 
         public static Color StringToColor(string colorStr)
@@ -1029,68 +811,134 @@ namespace Qarth
             int r = 0xFF0000 & colorInt;
             r >>= 16;
             return new Color((float)r / basenum, (float)g / basenum, (float)b / basenum, 1);
-
         }
 
-
-        public static string StringForMultiLine(this string target, int lineByteCount)
+        public static string GetTimeStrToDayEnd(string timestamp)
         {
-            string nextLine = "\n";
-            StringBuilder sb = new StringBuilder();
-
-            var listStr = target.MySplit(lineByteCount);
-            if (listStr.Length <= 1)
-            {
-                return target;
-            }
-
-            for (int i = 0; i < listStr.Length; i++)
-            {
-                sb.Append(listStr[i]);
-                if (i < listStr.Length - 1)
-                    sb.Append(nextLine);
-
-
-            }
-            return sb.ToString();
+            DateTime dtStart = new DateTime(1970, 1, 1, 0, 0, 0, 0);
+            var dtnow = DateTime.Now;
+            DateTime dtend = new DateTime(dtnow.Year, dtnow.Month, dtnow.Day + 1, 0, 0, 0, 0);
+            //var dtNow = dtStart.AddMilliseconds(long.Parse(timestamp));
+            var ts = dtend - DateTime.Now;
+            return ts.Hours + ":" + ts.Minutes + ":" + ts.Seconds;
         }
 
-        static string[] MySplit(this string str, int count)
+        public static int GetPassDayByTimeStamp(string timeStamp)
         {
-            var list = new List<string>();
-            int length = (int)Math.Ceiling((double)str.Length / count);
-
-            for (int i = 0; i < length; i++)
+            DateTime lastSignDate;
+            if (!string.IsNullOrEmpty(timeStamp))
             {
-                int start = count * i;
-                if (str.Length <= start)
+                lastSignDate = GetTimeFromTimestamp(timeStamp);
+                //if ()
                 {
-                    break;
-                }
-                if (str.Length < start + count)
-                {
-                    list.Add(str.Substring(start));
-                }
-                else
-                {
-                    list.Add(str.Substring(start, count));
+                    DateTime today = DateTime.Today;
+
+                    if (lastSignDate.DayOfYear != DateTime.Now.DayOfYear)
+                    {
+                        return today.DayOfYear - lastSignDate.DayOfYear;
+                    }
+                    else
+                        return 0;
                 }
             }
 
-            return list.ToArray();
+            return -1;
         }
 
-        static public string ToStringNormal(this float sum)
+        public static bool CheckIsNewDayByTimeStamp(string timeStamp)
         {
+            DateTime lastSignDate;
+            if (!string.IsNullOrEmpty(timeStamp))
+            {
+                lastSignDate = GetTimeFromTimestamp(timeStamp);
+                //if ()
+                {
+                    DateTime today = DateTime.Today;
+
+                    if (lastSignDate.DayOfYear != DateTime.Now.DayOfYear)
+                    {
+                        return true;
+                    }
+                    else
+                        return false;
+                }
+            }
+
+            return false;
+        }
+
+        public static string GetTimeStrToTimestamps(string timestamp)
+        {
+            DateTime dtStart = new DateTime(1970, 1, 1, 0, 0, 0, 0);
+            var dtEnd = dtStart.AddMilliseconds(long.Parse(timestamp));
+            var ts = dtEnd - DateTime.Now;
+            return ts.Minutes + ":" + ts.Seconds;
+        }
+
+        public static long GetSecToTimestamps(string timestamp)
+        {
+            DateTime dtStart = new DateTime(1970, 1, 1, 0, 0, 0, 0);
+            var dtEnd = dtStart.AddMilliseconds(long.Parse(timestamp));
+            return (long)(dtEnd - DateTime.Now).TotalSeconds;
+        }
+
+
+        //ps 每年有新苹果手机(https://www.theiphonewiki.com/wiki/Models)  请参考以上网址 将几款苹果刘海屏加入下方列表
+        public static bool IsIphoneLiuhaiScreen()
+        {
+            string str = UnityEngine.SystemInfo.deviceModel;
+            switch (str)
+            {
+                case "iPhone10,3"://iphonex
+                case "iPhone10,6"://iphonex
+
+                case "iPhone11,8"://iPhone XR
+                case "iPhone11,2"://iPhone XS
+                case "iPhone11,6"://iPhone XS Max
+                case "iPhone11,4"://iPhone XS Max
+
+                case "iPhone12,1"://iphone 11
+                case "iPhone12,3"://iphone 11 Pro
+                case "iPhone12,5"://iphone 11 Pro Max
+
+                case "iPhone13,1"://iPhone 12 mini
+                case "iPhone13,2"://iPhone 12 
+                case "iPhone13,3"://iPhone 12 Pro
+                case "iPhone13,4"://iPhone 12 Pro Max
+
+                case "iPhone14,4"://iPhone 13 mini
+                case "iPhone14,5"://iPhone 13
+                case "iPhone14,2"://iPhone 12 Pro
+                case "iPhone14,3"://iPhone 12 Pro Max
+
+                case "iPhone14,7"://iPhone 14
+                case "iPhone14,8"://iPhone 14 Plus
+                case "iPhone15,2"://iPhone 14 Pro
+                case "iPhone15,3"://iPhone 14 Pro Max
+
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        static public string ToStringNormal(this float sum, bool three = false)
+        {
+            if (three)
+                return (((int)(sum * 1000)) * 0.001f).ToString("0.###");
             //向下取整// 非四舍五入
             return (((int)(sum * 100)) * 0.01f).ToString("0.##");
         }
 
-        static public string ToStringNormal(this double sum)
+        static public string ToStringNormal(this double sum, bool three = false)
         {
+            if (three)
+                return (((int)(sum * 1000)) * 0.001f).ToString("0.###");
             //向下取整  //非四舍五入//  
             return (((int)(sum * 100)) * 0.01f).ToString("0.##");
         }
+
+
 
     }
 

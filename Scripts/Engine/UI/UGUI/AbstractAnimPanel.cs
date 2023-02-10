@@ -86,36 +86,28 @@ namespace Qarth
 
         protected virtual void OnPanelShowBegin()
         {
-#if UNITY_EDITOR
             Log.i(uiName + " show in");
-#endif
             if (m_OnShowBeginListener != null)
                 m_OnShowBeginListener.Invoke();
             m_OnShowBeginListener = null;
         }
         protected virtual void OnPanelShowComplete()
         {
-#if UNITY_EDITOR
             Log.i(uiName + " end in");
-#endif
             if (m_OnShowCompletedListener != null)
                 m_OnShowCompletedListener.Invoke();
             m_OnShowCompletedListener = null;
         }
         protected virtual void OnPanelHideBegin()
         {
-#if UNITY_EDITOR
             Log.i(uiName + " show out");
-#endif
             if (m_OnHideBeginListener != null)
                 m_OnHideBeginListener.Invoke();
             m_OnHideBeginListener = null;
         }
         protected virtual void OnPanelHideComplete()
         {
-#if UNITY_EDITOR
             Log.i(uiName + " end out");
-#endif
             if (m_OnHideCompletedListener != null)
                 m_OnHideCompletedListener.Invoke();
             m_OnHideCompletedListener = null;

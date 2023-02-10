@@ -210,19 +210,7 @@ namespace Qarth
                 }
             }
         }
-        /// <summary>
-        /// 显示格式00:00:00
-        /// </summary>
-        /// <param name="timestamp"></param>
-        /// <returns></returns>
-        public static string FormatRemainTimeOnlySymbol(long timestamp)
-        {
-            long day = timestamp / 86400;
-            long hours = (timestamp % 86400) / 3600;
-            long minute = (timestamp % 3600) / 60;
-            long second = (timestamp % 60);
-            return string.Format("{0:00}:{1:00}:{2:00}", hours, minute, second);
-        }
+
         /// <summary>
         /// 最大单位是天，
         ///     时间格式(大于1天) ：7天3时6分10秒
@@ -355,32 +343,6 @@ namespace Qarth
                 return string.Format("{0}:{1}", min.ToString("D2"), sec.ToString("D2"));
             else
                 return string.Format("{0}:{1}:{2}", hour.ToString("D2"), min.ToString("D2"), sec.ToString("D2"));
-        }
-
-
-        public static string FormatDateTime(int seconds, bool cn = false)
-        {
-            int day = seconds / 86400;
-            int hour = (seconds % 86400) / 3600;
-            int min = (seconds % 3600) / 60;
-            int sec = seconds % 60;
-
-            if (day > 0)
-            {
-                if (cn)
-                    return string.Format("{0}天{1}时{2}分",
-                        day.ToString("D2"), hour.ToString("D2"), min.ToString("D2"));
-                else
-                    return string.Format("{0}d{1}h{2}s", day.ToString("D2"), hour.ToString("D2"), min.ToString("D2"));
-            }
-            else
-            {
-                if (cn)
-                    return string.Format("{0}时{1}分{2}秒",
-                        hour.ToString("D2"), min.ToString("D2"), sec.ToString("D2"));
-                else
-                    return string.Format("{0}h{1}m{2}s", hour.ToString("D2"), min.ToString("D2"), sec.ToString("D2"));
-            }
         }
     }
 }

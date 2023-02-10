@@ -34,7 +34,6 @@ namespace Qarth
                     appName,
                     "real_name_params",
                     OnRemoteValueFetched,
-                    null,
                     channel,
                     url,
                     m_Headers);

@@ -109,7 +109,6 @@ namespace Qarth
         [SerializeField] private string m_WeMobAppKey;
         [SerializeField] private string m_WeMobChannelID;
         [SerializeField] private string m_SupportMail;
-        [SerializeField] private bool m_LoadInEditor;
         #endregion
 
         #region 属性
@@ -184,14 +183,6 @@ namespace Qarth
         public string SupportMail
         {
             get { return m_SupportMail; }
-        }
-
-        public bool loadInEditor
-        {
-            get
-            {
-                return m_LoadInEditor;
-            }
         }
         #endregion
 

@@ -56,8 +56,8 @@ namespace Qarth
                 m_Commands[i].Finish(false);
             }
 
-            DataAnalysisMgr.S.SatoriEvt_Guide(m_GuideStepID, "finish");
-            //DataAnalysisMgr.S.CustomEvent("Guide", string.Format("Finish_{0}", m_GuideStepID));
+            DataAnalysisMgr.S.CustomEvent("Guide", string.Format("Finish_{0}", m_GuideStepID));
+            EventSystem.S.Send(EngineEventID.OnFinishGuide, m_GuideStepID);
             Log.i("#GuideStep Finish:" + m_GuideStepID);
         }
 
@@ -119,9 +119,8 @@ namespace Qarth
             }
 
             Log.i("#GuideStep Start:" + m_GuideStepID);
-            //DataAnalysisMgr.S.CustomEvent("Guide", string.Format("Start_{0}", m_GuideStepID));
-            DataAnalysisMgr.S.SatoriEvt_Guide(m_GuideStepID, "start");
-
+            DataAnalysisMgr.S.CustomEvent("Guide", string.Format("Start_{0}", m_GuideStepID));
+            EventSystem.S.Send(EngineEventID.OnStartGuide, m_GuideStepID);
             m_IsActive = true;
 
             for (int i = 0; i < m_Commands.Count; ++i)

@@ -13,7 +13,7 @@ namespace Qarth
 {
     public partial class AudioMgr
     {
-        public partial class AudioUnit : ICacheAble, ICacheType
+        public class AudioUnit : ICacheAble, ICacheType
         {
             protected static Dictionary<int, AudioUnit> s_AudioUnitMap = new Dictionary<int, AudioUnit>();
             protected static int s_NextID = 0;

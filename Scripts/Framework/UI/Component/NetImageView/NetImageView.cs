@@ -1,4 +1,4 @@
-//  Desc:        Framework For Game Develop with Unity3d
+﻿//  Desc:        Framework For Game Develop with Unity3d
 //  Copyright:   Copyright (C) 2017 SnowCold. All rights reserved.
 //  WebSite:     https://github.com/SnowCold/Qarth
 //  Blog:        http://blog.csdn.net/snowcoldgame
@@ -25,8 +25,6 @@ namespace Qarth
         private bool        m_Refresh = false;
         [SerializeField]
         private bool        m_HideWhenLoading = true;
-        [SerializeField]
-        private bool        m_HideWhenNullUrl = true;
 
         private IRes        m_Res;
 
@@ -109,7 +107,7 @@ namespace Qarth
                 }
             }
 
-            if (m_Image != null && m_PreRes == null&&m_HideWhenNullUrl)
+            if (m_Image != null && m_PreRes == null)
             {
                 m_Image.enabled = false;
             }

@@ -46,9 +46,9 @@ namespace Qarth
         [SerializeField]
         public string m_BuildTxtDataLinuxShell = "table/output_txt.sh";
         [SerializeField]
-        public string m_BuildTxtDataUnixShell = "table/output_txt_unix.sh";
-        [SerializeField]
         public string m_BuildLrgDataLinuxShell = "table/output_xc.sh";
+        [SerializeField]
+        public string m_BuildTxtDataUnixShell = "table/output_txt_unix.sh";
 
         [SerializeField]
         private string m_ProjectToolsFolder = "/../../../Tools/";
@@ -197,14 +197,13 @@ namespace Qarth
             get { return S.m_BuildTxtDataLinuxShell; }
         }
 
-        public static string buildTxtDataUnixShell
-        {
-            get { return S.m_BuildTxtDataUnixShell; }
-        }
-
         public static string buildLrgDataLinuxShell
         {
             get { return S.m_BuildLrgDataLinuxShell; }
+        }
+        public static string buildTxtDataUnixShell
+        {
+            get { return S.m_BuildTxtDataUnixShell; }
         }
 
         public static string projectToolsFolder

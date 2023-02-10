@@ -15,90 +15,81 @@ namespace Qarth
     public class GuideMgr : TMonoSingleton<GuideMgr>
     {
         private List<Guide> m_TrackingGuideList = new List<Guide>();
-        private List<TDGuide> m_UnTrackingGuide = new List<TDGuide>();
-        private bool m_bStarted = false;
-        public bool isStartTracked
-        {
-            get { return m_bStarted; }
-        }
+		private List<TDGuide> m_UnTrackingGuide = new List<TDGuide>();
 
-        public bool forceFinish { get => m_ForceFinish; set => m_ForceFinish = value; }
-        private bool m_ForceFinish = false;
+		public static string GetGuideKey(int guideID)
+		{
+			return string.Format("guide_{0}", guideID);
+		}
 
-        public static string GetGuideKey(int guideID)
-        {
-            return string.Format("guide_{0}", guideID);
-        }
+		public static string GetLastKeyStepKey(int guideID)
+		{
+			return string.Format ("guidekey_{0}", guideID);
+		}
 
-        public static string GetLastKeyStepKey(int guideID)
-        {
-            return string.Format("guidekey_{0}", guideID);
-        }
+		public bool IsGuideFinish(int guideID)
+		{
+			return DataRecord.S.GetBool(GetGuideKey(guideID));
+		}
 
-        public bool IsGuideFinish(int guideID)
-        {
-            return DataRecord.S.GetBool(GetGuideKey(guideID));
-        }
+		public int GetGuideLastStep(int guideID)
+		{
+			int stepId = DataRecord.S.GetInt(GetLastKeyStepKey (guideID));
+			if (stepId > 0)
+			{
+				return stepId;
+			}
 
-        public int GetGuideLastStep(int guideID)
-        {
-            int stepId = DataRecord.S.GetInt(GetLastKeyStepKey(guideID));
-            if (stepId > 0)
-            {
-                return stepId;
-            }
+			var data = TDGuideStepTable.GetGuideFirstStep(guideID);
 
-            var data = TDGuideStepTable.GetGuideFirstStep(guideID);
+			if (data == null)
+			{
+				return -1;
+			}
 
-            if (data == null)
-            {
-                return -1;
-            }
-
-            return data.id - 1;
-        }
+			return data.id - 1;
+		}
 
         public void StartGuideTrack()
         {
-            m_bStarted = true;
-            var dataList = TDGuideTable.dataList;
+			var dataList = TDGuideTable.dataList;
 
-            for (int i = 0; i < dataList.Count; ++i)
-            {
-                TDGuide data = dataList[i];
-                if (IsGuideFinish(data.id))
-                {
-                    continue;
-                }
+			for (int i = 0; i < dataList.Count; ++i)
+			{
+				TDGuide data = dataList [i];
+				if (IsGuideFinish(data.id))
+				{
+					continue;
+				}
 
-                if (data.requireGuideId > 0)
-                {
-                    if (IsGuideFinish(data.requireGuideId))
-                    {
-                        AddTrackingGuide(new Guide(data.id));
-                    }
-                    else
-                    {
-                        m_UnTrackingGuide.Add(data);
-                    }
-                }
-                else
-                {
-                    AddTrackingGuide(new Guide(data.id));
-                }
-            }
+				if (data.requireGuideId > 0)
+				{
+					if (IsGuideFinish(data.requireGuideId))
+					{
+						AddTrackingGuide(new Guide(data.id));
+					}
+					else
+					{
+						m_UnTrackingGuide.Add(data);
+					}
+				}
+				else
+				{
+					AddTrackingGuide(new Guide(data.id));
+				}
+			}
 
             bool needRecheck = false;
 
-            for (int i = m_TrackingGuideList.Count - 1; i >= 0; --i)
-            {
-                if (!m_TrackingGuideList[i].StartTrack())
-                {
+			for (int i = m_TrackingGuideList.Count - 1; i >= 0; --i)
+			{
+				if (!m_TrackingGuideList[i].StartTrack())
+				{
                     SaveFinishGuideID(m_TrackingGuideList[i].guideID);
                     m_TrackingGuideList.RemoveAt(i);
                     needRecheck = true;
-                }
-            }
+				}
+			}
 
             if (needRecheck)
             {
@@ -108,94 +99,93 @@ namespace Qarth
 
         public override void OnSingletonInit()
         {
-            InitGuideCommandFactory();
-            InitGuideTriggerFactory();
-            InitRuntimeParamFactory();
+			InitGuideCommandFactory();
+			InitGuideTriggerFactory();
+			InitRuntimeParamFactory();
         }
 
         public void FinishStep(GuideStep step)
         {
-            int oldKeyStep = DataRecord.S.GetInt(GetLastKeyStepKey(step.guide.guideID));
+			int oldKeyStep = DataRecord.S.GetInt(GetLastKeyStepKey (step.guide.guideID));
 
-            if (oldKeyStep >= step.stepID)
-            {
-                return;
-            }
+			if (oldKeyStep >= step.stepID)
+			{
+				return;
+			}
 
-            //TODO:需要找到最近的关键帧并保存
-            var data = TDGuideStepTable.GetData(step.stepID);
+			//TODO:需要找到最近的关键帧并保存
+			var data = TDGuideStepTable.GetData(step.stepID);
 
-            if (data != null)
-            {
-                if (data.keyFrame)
-                {
-                    DataRecord.S.SetInt(GetLastKeyStepKey(step.guide.guideID), step.stepID);
-                    DataRecord.S.Save();
-                }
-                else
-                {
-                    //纪录最近的keyframe
-                    var allStep = TDGuideStepTable.GetDataAsGuideID(step.guide.guideID);
-                    for (int i = allStep.Count - 1; i >= 0; --i)
-                    {
-                        if (!allStep[i].keyFrame)
-                        {
-                            continue;
-                        }
+			if (data != null)
+			{
+				if (data.keyFrame)
+				{
+					DataRecord.S.SetInt(GetLastKeyStepKey(step.guide.guideID), step.stepID);
+					DataRecord.S.Save();
+				}
+				else
+				{
+					//纪录最近的keyframe
+					var allStep = TDGuideStepTable.GetDataAsGuideID(step.guide.guideID);
+					for (int i = allStep.Count - 1; i >= 0; --i)
+					{
+						if (!allStep[i].keyFrame)
+						{
+							continue;
+						}
 
-                        if (allStep[i].id <= oldKeyStep)
-                        {
-                            break;
-                        }
+						if (allStep[i].id <= oldKeyStep)
+						{
+							break;
+						}
 
-                        if (allStep[i].id <= data.id)
-                        {
-                            DataRecord.S.SetInt(GetLastKeyStepKey(step.guide.guideID), allStep[i].id);
-                            DataRecord.S.Save();
-                            break;
-                        }
+						if (allStep[i].id <= data.id)
+						{
+							DataRecord.S.SetInt(GetLastKeyStepKey(step.guide.guideID), allStep[i].id);
+							DataRecord.S.Save();
+							break;
+						}
 
-                    }
-                }
-            }
+					}
+				}
+			}
         }
 
-        public void FinishGuide(Guide guide)
-        {
-            m_TrackingGuideList.Remove(guide);
+		public void FinishGuide(Guide guide)
+		{
+			m_TrackingGuideList.Remove(guide);
 
             SaveFinishGuideID(guide.guideID);
-            EventSystem.S.Send(EngineEventID.OnGuideFinish, guide.guideID);
 
-            int finishGuideId = guide.guideID;
+			int finishGuideId = guide.guideID;
 
             bool needRecheck = false;
-            if (m_UnTrackingGuide.Count > 0)
-            {
-                for (int i = m_UnTrackingGuide.Count - 1; i >= 0; --i)
-                {
-                    if (m_UnTrackingGuide[i].requireGuideId == finishGuideId)
-                    {
-                        Guide nextGuide = new Guide(m_UnTrackingGuide[i].id);
-                        m_UnTrackingGuide.RemoveAt(i);
-                        if (nextGuide.StartTrack())
-                        {
-                            m_TrackingGuideList.Add(nextGuide);
-                        }
+			if (m_UnTrackingGuide.Count > 0)
+			{
+				for (int i = m_UnTrackingGuide.Count - 1; i >= 0; --i)
+				{
+					if (m_UnTrackingGuide[i].requireGuideId == finishGuideId)
+					{
+						Guide nextGuide = new Guide(m_UnTrackingGuide[i].id);
+						m_UnTrackingGuide.RemoveAt(i);
+						if (nextGuide.StartTrack())
+						{
+							m_TrackingGuideList.Add(nextGuide);
+						}
                         else
                         {
                             SaveFinishGuideID(nextGuide.guideID);
                             needRecheck = true;
                         }
-                    }
-                }
-            }
+					}
+				}
+			}
 
             if (needRecheck)
             {
                 ReCheckUnTrackGuide();
             }
-        }
+		}
 
         private void ReCheckUnTrackGuide()
         {
@@ -235,79 +225,76 @@ namespace Qarth
             DataRecord.S.Save();
         }
 
-        private void InitGuideCommandFactory()
-        {
-            RegisterGuideCommand(typeof(ButtonHackCommand));
-            RegisterGuideCommand(typeof(DelayCommand));
-            RegisterGuideCommand(typeof(HighlightUICommand));
-            RegisterGuideCommand(typeof(GuideHandCommand));
-            RegisterGuideCommand(typeof(PlayAudioCommand));
+		private void InitGuideCommandFactory()
+		{
+			RegisterGuideCommand(typeof(ButtonHackCommand));
+			RegisterGuideCommand(typeof(DelayCommand));
+			RegisterGuideCommand(typeof(HighlightUICommand));
+			RegisterGuideCommand(typeof(GuideHandCommand));
+			RegisterGuideCommand(typeof(PlayAudioCommand));
             RegisterGuideCommand(typeof(EventPauseCommand));
             RegisterGuideCommand(typeof(MonoFuncCall));
             RegisterGuideCommand(typeof(OpenPanelCommand));
             RegisterGuideCommand(typeof(ButtonCommand));
         }
 
-        private void InitGuideTriggerFactory()
-        {
-            RegisterGuideTrigger(typeof(TopPanelTrigger));
-            RegisterGuideTrigger(typeof(UINodeVisibleTrigger));
+		private void InitGuideTriggerFactory()
+		{
+			RegisterGuideTrigger(typeof(TopPanelTrigger));
+			RegisterGuideTrigger(typeof(UINodeVisibleTrigger));
             RegisterGuideTrigger(typeof(EventTrigger));
             RegisterGuideTrigger(typeof(EmptyTrigger));
-        }
+		}
 
-        private void InitRuntimeParamFactory()
-        {
-            RegisterRuntimeParam(typeof(UINodeFinder));
-            RegisterRuntimeParam(typeof(MonoFuncCall));
-        }
+		private void InitRuntimeParamFactory()
+		{
+			RegisterRuntimeParam(typeof(UINodeFinder));
+			RegisterRuntimeParam(typeof(MonoFuncCall));
+		}
 
-        public void RegisterRuntimeParam(Type type)
-        {
-            Type[] ty = new Type[0];
-            var constructor = type.GetConstructor(ty);
+		public void RegisterRuntimeParam(Type type)
+		{
+			Type[] ty = new Type[0];
+			var constructor = type.GetConstructor(ty);
 
-            if (constructor == null)
-            {
-                return;
-            }
+			if (constructor == null)
+			{
+				return;
+			}
 
-            RuntimeParamFactory.S.RegisterCreator(type.Name, () =>
-            {
-                return constructor.Invoke(null) as IRuntimeParam;
-            });
-        }
+			RuntimeParamFactory.S.RegisterCreator(type.Name, () => {
+				return constructor.Invoke(null) as IRuntimeParam;
+			});
+		}
 
-        public void RegisterGuideCommand(Type type)
-        {
-            Type[] ty = new Type[0];
-            var constructor = type.GetConstructor(ty);
+		public void RegisterGuideCommand(Type type)
+		{
+			Type[] ty = new Type[0];
+			var constructor = type.GetConstructor(ty);
 
-            if (constructor == null)
-            {
-                return;
-            }
+			if (constructor == null)
+			{
+				return;
+			}
 
-            GuideCommandFactory.S.RegisterCreator(type.Name, () =>
-            {
-                return constructor.Invoke(null) as AbstractGuideCommand;
-            });
-        }
+			GuideCommandFactory.S.RegisterCreator(type.Name, () => {
+				return constructor.Invoke(null) as AbstractGuideCommand;
+			});
+		}
 
-        public void RegisterGuideTrigger(Type type)
-        {
-            Type[] ty = new Type[0];
-            var constructor = type.GetConstructor(ty);
-            if (constructor == null)
-            {
-                return;
-            }
+		public void RegisterGuideTrigger(Type type)
+		{
+			Type[] ty = new Type[0];
+			var constructor = type.GetConstructor(ty);
+			if (constructor == null)
+			{
+				return;
+			}
 
-            GuideTriggerFactory.S.RegisterCreator(type.Name, () =>
-            {
-                return constructor.Invoke(null) as ITrigger;
-            });
-        }
+			GuideTriggerFactory.S.RegisterCreator(type.Name, () => {
+				return constructor.Invoke(null) as ITrigger;
+			});
+		}
 
         private void AddTrackingGuide(Guide guide)
         {
@@ -316,7 +303,7 @@ namespace Qarth
                 return;
             }
 
-            m_TrackingGuideList.Add(guide);
+			m_TrackingGuideList.Add(guide);
         }
     }
 }

@@ -17,7 +17,7 @@ namespace Qarth
                 AndroidJavaObject currentActivity = up.GetStatic<AndroidJavaObject>("currentActivity");
                 AndroidJavaObject contentResolver = currentActivity.Call<AndroidJavaObject>("getContentResolver");
                 AndroidJavaClass secure = new AndroidJavaClass("android.provider.Settings$Secure");
-                android_id = EncryptUtil.Base64Encrypt(secure.CallStatic<string>("getString", contentResolver, "android_id"));
+                android_id = secure.CallStatic<string>("getString", contentResolver, "android_id");
             }
             catch (Exception e)
             {
@@ -33,27 +33,9 @@ namespace Qarth
 
         public static string GetOpenUdid()
         {
-#if UNITY_ANDROID && !UNITY_EDITOR
-            string udid = "";
-            try
-            {
-                AndroidJavaClass up = new AndroidJavaClass("com.unity3d.player.UnityPlayer");
-                AndroidJavaObject currentActivity = up.GetStatic<AndroidJavaObject>("currentActivity");
-
-                AndroidJavaClass openclient = new AndroidJavaClass("com.satori.sdk.io.event.openudid.OpenUDIDClient");
-
-                udid = openclient.CallStatic<string>("getOpenUDID", currentActivity);
-            }
-            catch (Exception e)
-            {
-                Debug.LogError(e.Message);
-            }
-
-            return udid;
-#endif
-            return "HDGDGADK";
+            //TODO 临时使用 有时间需要更改
+            return SystemInfo.deviceUniqueIdentifier;
         }
-
     }
 
 }

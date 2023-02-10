@@ -4,19 +4,20 @@
 //  Blog:        http://blog.csdn.net/snowcoldgame
 //  Author:      SnowCold
 //  E-mail:      snowcold.ouyang@gmail.com
-
 using System;
 using UnityEngine;
+
 using System.Collections;
 using System.Collections.Generic;
 
 namespace Qarth
 {
+
     public class AssetBundleRes : AbstractRes
     {
         public static int s_ActiveCount = 0;
-        private bool m_UnloadFlag = true;
-        private string[] m_DependResList;
+        private bool        m_UnloadFlag = true;
+        private string[]    m_DependResList;
         private AssetBundleCreateRequest m_AssetBundleCreateRequest;
 
         public static AssetBundleRes Allocate(string name)
@@ -27,23 +28,30 @@ namespace Qarth
                 res.name = name;
                 res.InitAssetBundleName();
             }
-
             return res;
         }
 
         public AssetBundle assetBundle
         {
-            get { return (AssetBundle)m_Asset; }
+            get
+            {
+                return (AssetBundle)m_Asset;
+            }
 
-            set { m_Asset = value; }
+            set
+            {
+                m_Asset = value;
+            }
         }
 
         public AssetBundleRes(string name) : base(name)
         {
+
         }
 
         public AssetBundleRes()
         {
+
         }
 
         public override void AcceptLoaderStrategySync(IResLoader loader, IResLoaderStrategy strategy)
@@ -70,22 +78,7 @@ namespace Qarth
             string url = ProjectPathConfig.AssetBundleName2Url(m_Name);
 
             //timer.Begin("LoadSync AssetBundle:" + m_Name);
-            AssetBundle bundle = null;
-
-#if UNITY_EDITOR
-            if (AppConfig.S.loadInEditor)
-            {
-                resState = eResState.kReady;
-                ++s_ActiveCount;
-                return true;
-            }
-            else
-            {
-                bundle = AssetBundle.LoadFromFile(url);
-            }
-#else
-            bundle = AssetBundle.LoadFromFile(url);
-#endif
+            AssetBundle bundle = AssetBundle.LoadFromFile(url);
             //timer.End();
 
             m_UnloadFlag = true;
@@ -112,7 +105,7 @@ namespace Qarth
             {
                 return;
             }
-
+            
             resState = eResState.kLoading;
 
             ResMgr.S.PostIEnumeratorTask(this);
@@ -130,51 +123,26 @@ namespace Qarth
 
             string url = ProjectPathConfig.AssetBundleName2Url(m_Name);
 
-#if UNITY_EDITOR
-            if (AppConfig.S.loadInEditor)
-            {
-                yield return null;
-                m_LoadSuccess = true;
-            }
-            else
-            {
-                yield return LoadAssetBundleAsync(url);
-            }
-#else
-            yield return LoadAssetBundleAsync(url);
-#endif
-
-            if (!m_LoadSuccess)
-            {
-                finishCallback();
-                yield break;
-            }
-                
-            resState = eResState.kReady;
-            ++s_ActiveCount;
-
-            finishCallback();
-        }
-
-        private bool m_LoadSuccess;
-        private IEnumerator LoadAssetBundleAsync(string url)
-        {
             AssetBundleCreateRequest abcR = AssetBundle.LoadFromFileAsync(url);
 
             m_AssetBundleCreateRequest = abcR;
             yield return abcR;
             m_AssetBundleCreateRequest = null;
 
-            m_LoadSuccess = abcR.isDone;
-            if (!m_LoadSuccess)
+            if (!abcR.isDone)
             {
                 Log.e("AssetBundleCreateRequest Not Done! Path:" + m_Name);
                 OnResLoadFaild();
+                finishCallback();
+                yield break;
             }
-            else
-            {
-                assetBundle = abcR.assetBundle;
-            }
+
+            assetBundle = abcR.assetBundle;
+
+            resState = eResState.kReady;
+            ++s_ActiveCount;
+
+            finishCallback();
         }
 
         public override string[] GetDependResList()
@@ -191,12 +159,12 @@ namespace Qarth
 
             return true;
         }
-
+        
         public override void Recycle2Cache()
         {
             ObjectPool<AssetBundleRes>.S.Recycle(this);
         }
-
+        
         public override void OnCacheReset()
         {
             base.OnCacheReset();

@@ -2,13 +2,13 @@ using System;
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
-#if UNITY_2018 || UNITY_2019
+#if UNITY_2018 || UNITY_2019|| UNITY_2020
 using UnityEngine.Networking;
 #endif
 
 namespace Qarth
 {
-#if UNITY_2018 || UNITY_2019
+#if UNITY_2018 || UNITY_2019|| UNITY_2020
     public class BypassCertificate : CertificateHandler
     {
         protected override bool ValidateCertificate(byte[] certificateData)

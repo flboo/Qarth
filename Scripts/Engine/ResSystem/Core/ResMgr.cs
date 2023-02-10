@@ -10,7 +10,6 @@ using System.IO;
 using System.Collections;
 using System.Collections.Generic;
 using System.Text;
-using GameWish.Game;
 
 namespace Qarth
 {
@@ -20,18 +19,18 @@ namespace Qarth
         private const string INNER_RES_BUILDTIME = "eirv_1988520905";
         private const string INNER_RES_PACKAGE = "eirp_1988520905";
 
-        #region 字段
-        private Dictionary<string, IRes> m_ResDictionary = new Dictionary<string, IRes>();
-        private List<IRes> m_ResList = new List<IRes>();
+#region 字段
+        private Dictionary<string, IRes>    m_ResDictionary = new Dictionary<string, IRes>();
+        private List<IRes>                  m_ResList = new List<IRes>();
         [SerializeField]
-        private int m_CurrentCoroutineCount = 0;
-        private int m_MaxCoroutineCount = 8;//最快协成大概在6到8之间
-        private TimeDebugger m_TimeDebugger;
+        private int                         m_CurrentCoroutineCount = 0;
+        private int                         m_MaxCoroutineCount = 8;//最快协成大概在6到8之间
+        private TimeDebugger                m_TimeDebugger;
         private LinkedList<IEnumeratorTask> m_IEnumeratorTaskStack = new LinkedList<IEnumeratorTask>();
 
-        private bool m_IsWorking = true;
+        private bool                        m_IsWorking = true;
         //Res 在ResMgr中 删除的问题，ResMgr定时收集列表中的Res然后删除
-        private bool m_IsResMapDirty = false;
+        private bool                        m_IsResMapDirty = false;
 
         #endregion
 
@@ -172,20 +171,7 @@ namespace Qarth
         public void InitResMgr()
         {
             Log.i("Init[ResMgr]");
-#if UNITY_EDITOR
-            if (AppConfig.S.loadInEditor)
-            {
-                AssetDataTable table = AssetTableUtils.BuildEditorDataTable();
-                AssetDataTable.S.SetAllAssetDataPackages(table);
-            }
-            else
-            {
-                ReloadABTable();
-            }
-#else
             ReloadABTable();
-#endif
-
         }
 
         #region 属性
@@ -262,9 +248,9 @@ namespace Qarth
             return null;
         }
 
-        #endregion
+#endregion
 
-        #region Private Func
+#region Private Func
 
         private void Update()
         {
@@ -338,6 +324,6 @@ namespace Qarth
         {
             StartCoroutine(emu);
         }
-        #endregion
+#endregion
     }
 }

@@ -24,6 +24,8 @@ namespace Qarth
         protected bool m_IsSoundEnable = true;
         protected bool m_IsMusicEnable = true;
 
+        protected int m_MainUnitId = -1;
+
         public bool isSoundEnable
         {
             get { return m_IsSoundEnable; }
@@ -107,7 +109,19 @@ namespace Qarth
             m_MainUnit.SetAudio(gameObject, name, loop, m_IsMusicEnable);
             m_MainUnit.SetOnFinishListener(callBack);
             m_MainUnit.customEventID = customEventID;
+            m_MainUnitId = m_MainUnit.id;
             return m_MainUnit.id;
+        }
+
+        public void PauseBg(bool state)
+        {
+            if (m_MainUnitId >= 0)
+            {
+                if (state)
+                    Pause(m_MainUnitId);
+                else
+                    Resume(m_MainUnitId);
+            }
         }
 
         public int PlaySound(string name, bool loop = false, Action<int> callBack = null, int customEventID = -1)

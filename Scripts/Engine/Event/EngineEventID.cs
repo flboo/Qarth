@@ -16,8 +16,6 @@ namespace Qarth
         EngineEventIDMin = 1000000,
         OnPanelUpdate,
 
-        OnGuideFinish,
-
         OnApplicationFocusChange,
         OnApplicationPauseChange,
         OnAfterApplicationPauseChange,
@@ -41,9 +39,15 @@ namespace Qarth
         OnNeedHideBanner,
         ///////////////
 
-        OnRealNameInit,
+        OnRealNameFirstIn,
         OnRealNameValid,
         OnRealNameCancle,
         OnRealNameRemoteConfFetched,
+        OnRealNameInit,
+
+        //ios
+        OnATTConfigPatch,
+        OnFinishGuide,
+        OnStartGuide
     }
 }

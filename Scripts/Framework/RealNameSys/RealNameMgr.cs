@@ -32,9 +32,9 @@ namespace Qarth
         {
             // 目前做法是拉取不到配置的情况下,不初始化
             EventSystem.S.Register(EngineEventID.OnRealNameRemoteConfFetched, OnRealNameRemoteConfFetched);
+            //DoInitLogic();
         }
 
-        //本地初始化 不适用云配
         public void InitLocal()
         {
             DoInitLogic();
@@ -53,9 +53,6 @@ namespace Qarth
             hasInit = true;
 
             m_RealNameAgeType = (RealNameHelper.RealNameAgeType)PlayerPrefs.GetInt(RealNameHelper.REALNAME_STATE_KEY, -1);
-
-            EventSystem.S.Send(EngineEventID.OnRealNameInit);
-
             switch (m_RealNameAgeType)
             {
                 case RealNameHelper.RealNameAgeType.None:
@@ -72,6 +69,8 @@ namespace Qarth
                 case RealNameHelper.RealNameAgeType.Over18:
                     break;
             }
+
+            EventSystem.S.Send(EngineEventID.OnRealNameInit);
         }
 
         private void HandleInit()
@@ -129,6 +128,17 @@ namespace Qarth
             }
             return false;
         }
+
+        //public void PopSuccessWarning()
+        //{
+        //    SetPopConfirmCallback(() =>
+        //    {
+        //        EventSystem.S.Send(EngineEventID.OnRealNameValidOver18, true);
+        //        UIMgr.S.ClosePanelAsUIID(EngineUI.RealNameCommitPanel);
+        //    });
+        //    UIMgr.S.OpenTopPanel(EngineUI.RealNamePopPanel, null, "实名认证成功",
+        //        string.Format("客服邮箱:\n{0}", AppConfig.S.SupportMail), true);
+        //}
 
         //实名认证成功
         public void DoConfirmSuccess()
@@ -271,11 +281,6 @@ namespace Qarth
             var t = PlayerPrefs.GetInt(RealNameHelper.REALNAME_GUEST_PLAY_TIME, 0);
             PlayerPrefs.SetInt(RealNameHelper.REALNAME_GUEST_PLAY_TIME, t + 1);
             CheckGuestTimeOut();
-
-            //if (t == m_GuestCheckCount - 10)
-            //{
-            //    PopNormalWarning(RealNameHelper.REALNAME_TIME_LIMIT_NEAR_WORDS);
-            //}
         }
 
         void OnLimitTimerTick(int count)

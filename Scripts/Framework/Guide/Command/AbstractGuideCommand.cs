@@ -14,17 +14,18 @@ namespace Qarth
     public class AbstractGuideCommand
     {
         private GuideStep m_GuideStep;
-        private bool m_IsRunning = false;
+		private bool m_IsRunning = false;
 
         public GuideStep guideStep
         {
             get { return m_GuideStep; }
             set { m_GuideStep = value; }
         }
-        public virtual void SetParam(object[] pv)
-        {
 
-        }
+		public virtual void SetParam(object[] pv)
+		{
+			
+		}
 
         protected void FinishStep()
         {
@@ -32,43 +33,42 @@ namespace Qarth
             {
                 return;
             }
-            m_GuideStep.OnCommandFinish();
+
+			m_GuideStep.OnCommandFinish();
         }
 
         public void Start()
         {
+			if (m_IsRunning)
+			{
+				return;
+			}
 
-            if (m_IsRunning)
-            {
-                return;
-            }
-            m_IsRunning = true;
-            if (GuideMgr.S.forceFinish)
-                FinishStep();
-            else
-                OnStart();
+			m_IsRunning = true;
+			OnStart ();
         }
 
-        public void Finish(bool forceClean)
+		public void Finish(bool forceClean)
         {
-            if (!m_IsRunning)
-            {
-                return;
-            }
+			if (!m_IsRunning)
+			{
+				return;
+			}
 
-            m_IsRunning = false;
+			m_IsRunning = false;
 
-            OnFinish(forceClean);
+			OnFinish (forceClean);
         }
 
-        protected virtual void OnStart()
-        {
+		protected virtual void OnStart()
+		{
+			
+		}
 
-        }
+		protected virtual void OnFinish(bool forceClean)
+		{
+			
+		}
 
-        protected virtual void OnFinish(bool forceClean)
-        {
-
-        }
     }
 }

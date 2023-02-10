@@ -24,11 +24,6 @@ namespace Qarth
             get { return m_AllAssetDataPackages; }
         }
 
-        public void SetAllAssetDataPackages(AssetDataTable table)
-        {
-            m_ActiveAssetDataPackages = table.allAssetDataPackages;
-        }
-
         public void SwitchLanguage(string key)
         {
             m_ActiveAssetDataPackages.Clear();
@@ -71,7 +66,7 @@ namespace Qarth
             {
                 return -1;
             }
-
+            
             string key = null;
             string path = null;
 
@@ -232,7 +227,7 @@ namespace Qarth
                 if (m_AllAssetDataPackages[i].key.Equals(key))
                 {
                     var oldConfig = m_AllAssetDataPackages[i];
-
+                    
                     if (oldConfig.buildTime > package.buildTime)
                     {
                         return;
@@ -242,7 +237,7 @@ namespace Qarth
                         m_AllAssetDataPackages.RemoveAt(i);
                         break;
                     }
-
+                    
                 }
             }
 

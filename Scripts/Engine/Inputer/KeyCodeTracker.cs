@@ -52,7 +52,8 @@ namespace Qarth
                         // 需要修改此处 加上以下判断
                         if (PlayerPrefs.GetInt("channel_exit_key", 0) == 1)
                         {
-                            // Application.Quit();
+                            //Application.Quit();
+                            System.Diagnostics.Process.GetCurrentProcess().Kill();
                         }
                     }
 

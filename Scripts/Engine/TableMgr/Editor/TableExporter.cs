@@ -12,45 +12,21 @@ using UnityEditor;
 using System.Threading;
 using System.IO;
 using System.Diagnostics;
-using System.Runtime.InteropServices;
 
 namespace Qarth.Editor
 {
     public class TableExporter
     {
-        public static OSPlatform GetOSPlatform()
-        {
-            //Set default as window
-            OSPlatform osPlatform = OSPlatform.Windows;
-            // Check if it's osx 
-            var checker = RuntimeInformation.IsOSPlatform(OSPlatform.OSX);
-            osPlatform = checker ? OSPlatform.OSX : osPlatform;
-            // Check if it's Linux 
-            checker = RuntimeInformation.IsOSPlatform(OSPlatform.Linux);
-            osPlatform = checker ? OSPlatform.Linux : osPlatform;
-            return osPlatform;
-        }
-
         public static bool IsLinuxSystem()
         {
             PlatformID platformID = System.Environment.OSVersion.Platform;
-            //! mono's bug here: on macos the PlatformID is not MacOSX but Unix
+
             if (platformID == PlatformID.MacOSX || platformID == PlatformID.Unix)
             {
                 return true;
             }
 
             return false;
-        }
-
-        public static bool IsPureUnixSystem()
-        {
-            return "linux" == GetOSPlatform().ToString().ToLower();
-        }
-
-        public static bool IsMacSystem()
-        {
-            return OSPlatform.OSX == GetOSPlatform();
         }
 
         [MenuItem("Assets/Qarth/Table/Build C#")]
@@ -73,19 +49,31 @@ namespace Qarth.Editor
             newThread.Start();
         }
 
-        [MenuItem("Assets/Qarth/Table/Build Data(txt)")]
+        [MenuItem("Assets/Qarth/Table/Build Data(android_txt)")]
         public static void BuildDataTxtMode()
         {
             string path = ProjectPathConfig.projectToolsFolder;
-            if (IsPureUnixSystem())
-            {
-                path += ProjectPathConfig.buildTxtDataUnixShell;
-            }
-            else if (IsMacSystem())
+            if (IsLinuxSystem())
             {
                 path += ProjectPathConfig.buildTxtDataLinuxShell;
             }
-            else if (IsLinuxSystem())
+            else
+            {
+                path += ProjectPathConfig.buildTxtDataWinShell;
+            }
+
+            Thread newThread = new Thread(new ThreadStart(() =>
+            {
+                BuildCSharpThreadStart(path);
+            }));
+            newThread.Start();
+        }
+
+        [MenuItem("Assets/Qarth/Table/Build Data(ios_txt)")]
+        public static void BuildIosDataTxtMode()
+        {
+            string path = ProjectPathConfig.projectToolsFolder;
+            if (IsLinuxSystem())
             {
                 path += ProjectPathConfig.buildTxtDataUnixShell;
             }
@@ -148,10 +136,10 @@ namespace Qarth.Editor
 
             process.Start();
             string outPutstr = process.StandardOutput.ReadToEnd();
-            // if (!string.IsNullOrEmpty(outPutstr))
-            // {
-            //     Log.i(outPutstr);
-            // }
+            if (!string.IsNullOrEmpty(outPutstr))
+            {
+                Log.i(outPutstr);
+            }
 
             process.WaitForExit();
             process.Close();
@@ -168,10 +156,10 @@ namespace Qarth.Editor
 
             process.Start();
             string outPutstr = process.StandardOutput.ReadToEnd();
-            // if (!string.IsNullOrEmpty(outPutstr))
-            // {
-            //     Log.i(outPutstr);
-            // }
+            if (!string.IsNullOrEmpty(outPutstr))
+            {
+                Log.i(outPutstr);
+            }
 
             process.WaitForExit();
             process.Close();

@@ -9,17 +9,13 @@ using UnityEngine;
 
 using System.Collections;
 using System.Collections.Generic;
-using GameWish.Game;
-#if UNITY_EDITOR
-using UnityEditor;
-#endif
 
 namespace Qarth
 {
     public class AssetRes : BaseRes
     {
-        protected string[] m_AssetBundleArray;
-        protected AssetBundleRequest m_AssetBundleRequest;
+        protected string[]            m_AssetBundleArray;
+        protected AssetBundleRequest  m_AssetBundleRequest;
 
         public static AssetRes Allocate(string name)
         {
@@ -45,7 +41,7 @@ namespace Qarth
         }
         public AssetRes(string name) : base(name)
         {
-
+            
         }
 
         public AssetRes()
@@ -75,64 +71,11 @@ namespace Qarth
                 return false;
             }
 
-#if UNITY_EDITOR
-            if (AppConfig.S.loadInEditor)
-            {
-                return LoadFileInEditor();
-            }
-            else
-            {
-                return LoadFile();
-            }
-#else
-            return LoadFile();
-#endif
-            return LoadFile();
-        }
-#if UNITY_EDITOR
-        private bool LoadFileInEditor()
-        {
-            AssetBundleRes abR = ResMgr.S.GetRes<AssetBundleRes>(assetBundleName);
-            if (abR == null)
-            {
-                Log.e("Failed to Load Asset, Not Find AssetBundleImage:" + assetBundleName);
-                return false;
-            }
-
-            var assetPaths = AssetTableUtils.GetAssetPathsFromAssetBundleAndAssetName(abR.name, name);
-            if (assetPaths.Length == 0)
-            {
-                Debug.LogError("Failed Load Asset:" + name);
-                OnResLoadFaild();
-                return false;
-            }
-
-            HoldDependRes();
-            resState = eResState.kLoading;
-
-            UnityEngine.Object obj = AssetDatabase.LoadAssetAtPath(assetPaths[0], typeof(UnityEngine.Object));
-
-            if (obj == null)
-            {
-                Log.e("Failed Load Asset:" + m_Name);
-                OnResLoadFaild();
-                return false;
-            }
-
-            m_Asset = obj;
-
-            resState = eResState.kReady;
-
-            return true;
-        }
-#endif
-        private bool LoadFile()
-        {
             AssetBundleRes abR = ResMgr.S.GetRes<AssetBundleRes>(assetBundleName);
 
             if (abR == null || abR.assetBundle == null)
             {
-                Log.e("Failed to Load Asset, Not Find AssetBundleImage:" + assetBundleName);
+				Log.e("Failed to Load Asset, Not Find AssetBundleImage:" + assetBundleName);
                 return false;
             }
 
@@ -192,20 +135,8 @@ namespace Qarth
             }
 
             AssetBundleRes abR = ResMgr.S.GetRes<AssetBundleRes>(assetBundleName);
-            bool hasAsset;
-#if UNITY_EDITOR
-            if (AppConfig.S.loadInEditor)
-            {
-                hasAsset = abR != null;
-            }
-            else
-            {
-                hasAsset = abR != null && abR.assetBundle != null;
-            }
-#else
-            hasAsset = abR != null && abR.assetBundle != null;
-#endif
-            if (!hasAsset)
+
+            if (abR == null || abR.assetBundle == null)
             {
                 Log.e("Failed to Load Asset, Not Find AssetBundleImage:" + assetBundleName);
                 OnResLoadFaild();
@@ -216,36 +147,7 @@ namespace Qarth
             //确保加载过程中依赖资源不被释放:目前只有AssetRes需要处理该情况
             HoldDependRes();
 
-#if UNITY_EDITOR
-            if (AppConfig.S.loadInEditor)
-            {
-                yield return LoadAssetInEditorAsync(abR.name, name);
-            }
-            else
-            {
-                yield return LoadAssetAsync(abR, name);
-            }
-#else
-            yield return LoadAssetAsync(abR, name);
-#endif
-
-
-            if (!m_LoadSuccess)
-            {
-                finishCallback();
-                yield break;
-            }
-
-            resState = eResState.kReady;
-
-            finishCallback();
-        }
-
-        private bool m_LoadSuccess;
-
-        private IEnumerator LoadAssetAsync(AssetBundleRes abR, string assetName)
-        {
-            AssetBundleRequest abQ = abR.assetBundle.LoadAssetAsync(assetName);
+            AssetBundleRequest abQ = abR.assetBundle.LoadAssetAsync(m_Name);
             m_AssetBundleRequest = abQ;
 
             yield return abQ;
@@ -257,7 +159,7 @@ namespace Qarth
             if (refCount <= 0)
             {
                 OnResLoadFaild();
-                m_LoadSuccess = false;
+                finishCallback();
                 yield break;
             }
 
@@ -265,7 +167,7 @@ namespace Qarth
             {
                 Log.e("Failed Load Asset:" + m_Name);
                 OnResLoadFaild();
-                m_LoadSuccess = false;
+                finishCallback();
                 yield break;
             }
 
@@ -275,40 +177,14 @@ namespace Qarth
             {
                 Log.e("Failed Load Asset:" + m_Name);
                 OnResLoadFaild();
-                m_LoadSuccess = false;
+                finishCallback();
                 yield break;
             }
 
-            m_LoadSuccess = true;
+            resState = eResState.kReady;
+
+            finishCallback();
         }
-
-#if UNITY_EDITOR
-        private IEnumerator LoadAssetInEditorAsync(string abName, string assetName)
-        {
-            var assetPaths = AssetTableUtils.GetAssetPathsFromAssetBundleAndAssetName(abName, assetName);
-            if (assetPaths.Length == 0)
-            {
-                Debug.LogError("Failed Load Asset:" + name);
-                m_LoadSuccess = false;
-                yield break;
-            }
-
-            UnityEngine.Object obj = AssetDatabase.LoadAssetAtPath(assetPaths[0], typeof(UnityEngine.Object));
-
-            if (obj == null)
-            {
-                Log.e("Failed Load Asset:" + m_Name);
-                m_LoadSuccess = false;
-                yield break;
-            }
-            else
-            {
-                m_Asset = obj;
-                m_LoadSuccess = true;
-                yield return null;
-            }
-        }
-#endif
 
         public override string[] GetDependResList()
         {
@@ -319,7 +195,7 @@ namespace Qarth
         {
             m_AssetBundleArray = null;
         }
-
+        
         public override void Recycle2Cache()
         {
             ObjectPool<AssetRes>.S.Recycle(this);

@@ -383,7 +383,6 @@ namespace Qarth
             return Encoding.UTF8.GetString(plainText);
         }
 
-
         /// <summary>
         /// 加密: AES CBC NoPadding GZip压缩
         /// </summary>
@@ -607,6 +606,7 @@ namespace Qarth
             return hashStr.Bytes2Str();
         }
 
+
         /// <summary>
         ///  //GZIP压缩 1
         /// </summary>
@@ -644,6 +644,7 @@ namespace Qarth
                 }
             }
         }
+
         #endregion
 
     }

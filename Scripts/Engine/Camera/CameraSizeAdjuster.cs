@@ -14,8 +14,6 @@ namespace Qarth
             Height,
         }
 
-        [SerializeField] 
-        private bool m_AutoReference;
         [SerializeField]
         private Vector2 m_ReferenceResolution;
         [SerializeField]
@@ -33,8 +31,7 @@ namespace Qarth
             {
                 m_Camera = GetComponent<Camera>();
             }
-            if(m_AutoReference)
-                m_ReferencePixelsPerUnit = 100 * (Screen.width / m_ReferenceResolution.x);
+
             Adjust();
         }
         
@@ -48,8 +45,6 @@ namespace Qarth
 #endif
         private void Adjust()
         {
-            
-            
             Vector2 designSize = m_ReferenceResolution / m_ReferencePixelsPerUnit;
             float aspectRatio = Screen.width * 1.0f / Screen.height;
 
@@ -69,7 +64,6 @@ namespace Qarth
             }
             else
             {
-                
                 float orthographicSizeWidth = Screen.width / (m_ReferencePixelsPerUnit * 2 * aspectRatio);
                 if (m_NeedFit)
                 {
